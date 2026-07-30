@@ -49,29 +49,42 @@ def setup_script_gnu(build_config: BuildConfig,
 
     # The base flags
     # ==============
-    default_flags = ['-frecursive', '-g', '-fallow-argument-mismatch']
+    default_flags = ['-frecursive', '-g',
+                     '-fallow-argument-mismatch'
+                     ]
 
     gfortran.add_flags(default_flags, 'base')
-
-
-    gcc.add_flags(["-fcommon"], "safe")
-    gcc.add_flags(["-fcommon"], "debug")
 
     # Debug
     # =====
     gfortran.add_flags(['-O0', '-Wall', '-fcheck=all',
                         '-ffpe-trap=zero,invalid,overflow',
                         '-fallow-invalid-boz'], "debug")
+    gcc.add_flags(["-fcommon"], "debug")
+
+    # ContainFlags uses a substring test. So add / and .
+    # to make sure we match the full filename
+    psrc = ["/conversions.f90", "/pressuresource.f90", "/fftsolver.f90",
+            "/fftnorth.f90", "/fftpack.f90", "/iterativesolver.f90",
+            "/iterativesolver_single_prec.f90"]
 
     # Safe
     # ====
     gfortran.add_flags(['-O2', '-fbounds-check', '-fallow-invalid-boz',
                         '-fallow-invalid-boz'], "safe")
+    gcc.add_flags(["-fcommon"], "safe")
+
+    for fname in psrc:
+        gfortran.add_flags(ContainFlags(fname,
+                                        ["-O1",
+                                         "-ffpe-trap=zero,invalid,overflow"]),
+                           "safe")
 
     # High
     # ====
     gfortran.add_flags(['-O3', '-pg'], "high")
-
+    for fname in psrc:
+        gfortran.add_flags(ContainFlags(fname, ["-O1"]), "debug")
 
     # Set up the linker
     # =================

@@ -49,11 +49,18 @@ def setup_script_gnu(build_config: BuildConfig,
 
     # The base flags
     # ==============
-    default_flags = ['-frecursive', '-g',
-                     '-fallow-argument-mismatch'
-                     ]
-
+    default_flags = ['-g']
     gfortran.add_flags(default_flags, 'base')
+    if gfortran.get_version() >= (10, 0):
+        gfortran.add_flags("-fallow-argument-mismatch", "base")
+    gfortran.add_flags(ContainFlags("/model_core/", "-frecursive"), "base")
+    gfortran.add_flags(ContainFlags("/io/", "-frecursive"), "base")
+
+    # The following files have special flags in some modes. ContainFlags
+    # uses a substring test. Add '/' to make sure we match the full filename.
+    psrc = ["/conversions.f90", "/pressuresource.f90", "/fftsolver.f90",
+            "/fftnorth.f90", "/fftpack.f90", "/iterativesolver.f90",
+            "/iterativesolver_single_prec.f90"]
 
     # Debug
     # =====
@@ -62,20 +69,14 @@ def setup_script_gnu(build_config: BuildConfig,
                         '-fallow-invalid-boz'], "debug")
     gcc.add_flags(["-fcommon"], "debug")
 
-    # ContainFlags uses a substring test. So add / and .
-    # to make sure we match the full filename
-    psrc = ["/conversions.f90", "/pressuresource.f90", "/fftsolver.f90",
-            "/fftnorth.f90", "/fftpack.f90", "/iterativesolver.f90",
-            "/iterativesolver_single_prec.f90"]
-
     # Safe
     # ====
     gfortran.add_flags(['-O2', '-fbounds-check', '-fallow-invalid-boz',
                         '-fallow-invalid-boz'], "safe")
     gcc.add_flags(["-fcommon"], "safe")
 
-    for fname in psrc:
-        gfortran.add_flags(ContainFlags(fname,
+    for pattern in psrc:
+        gfortran.add_flags(ContainFlags(pattern,
                                         ["-O1",
                                          "-ffpe-trap=zero,invalid,overflow"]),
                            "safe")
@@ -84,17 +85,16 @@ def setup_script_gnu(build_config: BuildConfig,
     # ====
     gfortran.add_flags(['-O3', '-pg'], "high")
     for fname in psrc:
-        gfortran.add_flags(ContainFlags(fname, ["-O1"]), "debug")
+        gfortran.add_flags(ContainFlags(fname, ["-O1", "-pg"]), "debug")
 
     # Set up the linker
     # =================
-    # This will implicitly affect all gfortran based linkers, e.g.
-    # linker-mpif90-gfortran will use these flags as well.
     linker = tr.get_tool(Category.LINKER, f"linker-{gfortran.name}")
     linker = cast(Linker, linker)
 
-    # This likely needs to be update for each site (e.g. adding paths)
+    # As default, use nf-config to set NetCDF linker flags. If it's not
+    # available (or not working properly), the site-specific setup must
+    # add netcdf definitions.
     nf_config = NfConfig()
     if nf_config.is_available:
-        # If not available, the site-specific setup must define netcdf
         linker.add_lib_flags("netcdf", nf_config.get_linker_flags())

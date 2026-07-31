@@ -78,27 +78,6 @@ class Config:
         # initialising compilers
         self._args = args
 
-    def update_repos(self, dep_info):
-        """
-        This method is called by the main script to allow each site to
-        replace the URLs of repos with e.g. local mirrors.
-        """
-
-        # A simplified example to use mirrors could be (which would
-        # typically be implemented in a derived, site-specific class)
-        # root = Path("/root/of/mirrors")
-        # mirrors = {"git@github.com:MetOffice/casim.git": root / "casim",
-        #            "git@github.com:MetOffice/jules.git": root / "jules",
-        #             }
-        # for dependency in dep_info.get_repo_names():
-        #     repo_infos = dep_info.get_repo_info(dependency)
-        #     for source_ref in repo_infos:
-        #         if source_ref.source in mirrors:
-        #             logger.info(f"Using mirror "
-        #                         f"'{mirrors[source_ref.source]}' for "
-        #                         f"'{source_ref.source}")
-        #             source_ref.source = mirrors[source_ref.source]
-
     def update_toolbox(self, build_config: BuildConfig) -> None:
         '''
         Set the default compiler flags for the various compiler
@@ -133,16 +112,6 @@ class Config:
         self.setup_gnu(build_config)
         self.setup_nvidia(build_config)
         self.setup_cray(build_config)
-
-    def get_path_flags(self, build_config: BuildConfig) -> List[AddFlags]:
-        '''
-        Returns the path-specific flags to be used.
-        TODO #313: Ideally we have only one kind of flag, but as a quick
-        work around we provide this method.
-
-        :param build_config: the Fab build configuration instance
-        '''
-        return []
 
     def setup_cray(self, build_config: BuildConfig) -> None:
         '''

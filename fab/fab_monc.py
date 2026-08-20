@@ -16,11 +16,7 @@ from typing import cast, Iterable, List, Optional, Union
 
 from fab.fab_base.fab_base import FabBase
 from fab.api import (AddFlags, Category, Compiler, Exclude, find_source_files,
-                     grab_folder, Include, root_inc_files)
-
-# Since we don't have a proper python package, we cannot use __name__, so set
-# up an appropriate dotted name for logging:
-logger = logging.getLogger("monc.fab.fab_monc")
+                     grab_files, Include, root_inc_files)
 
 
 class FabMonc(FabBase):
@@ -80,9 +76,10 @@ class FabMonc(FabBase):
             does not exist, indicating an invalid directory structure.
         '''
         for directory in ["components", "io", "misc", "model_core",
-                          "testcases"]:
-            grab_folder(self.config, self._root / directory,
-                        dst_label=directory)
+                          "testcases",
+                          "monc_driver.F90"]:
+            grab_files(self.config, self._root / directory,
+                       dst_label=directory)
 
     def find_source_files_step(
             self,
@@ -157,8 +154,8 @@ class FabMonc(FabBase):
 # ==========================================================================
 if __name__ == "__main__":
 
-    # Initialise a top-level logger
-    logger = logging.getLogger('um')
+    # Enable full fab logging for now:
+    logger = logging.getLogger('fab')
     logger.setLevel(logging.DEBUG)
     handler = logging.StreamHandler()
     formatter = logging.Formatter('%(levelname)s: %(name)s: %(message)s')
